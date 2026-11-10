@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { api, listsQuery, tasksQuery } from '../src/api';
+import { endSession } from '../src/session';
 import { useTheme } from '../src/theme';
 import tokens from '../src/tokens.json';
 import {
@@ -26,6 +27,7 @@ export default function HomeScreen() {
   const { colors } = useTheme();
   const client = useQueryClient();
   const lists = useQuery(listsQuery);
+  const logout = useMutation({ mutationFn: () => endSession() });
   const [title, setTitle] = useState('');
   const [color, setColor] = useState(tokens.listColors[0].value);
   const [note, setNote] = useState('');
@@ -74,6 +76,17 @@ export default function HomeScreen() {
             <Text className="text-body text-muted">
               Notas e tarefas em um só lugar.
             </Text>
+            <Button
+              quiet
+              label="Sair"
+              disabled={logout.isPending}
+              onPress={() => logout.mutate()}
+            />
+            {logout.isError && (
+              <Text className="text-danger">
+                Não foi possível sair. Tente novamente.
+              </Text>
+            )}
           </View>
 
           <Card className="gap-md p-lg">

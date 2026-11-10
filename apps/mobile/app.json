@@ -6,7 +6,16 @@
     "version": "0.0.0",
     "userInterfaceStyle": "automatic",
     "platforms": ["android", "ios"],
-    "plugins": ["expo-router"],
+    "plugins": [
+      "expo-router",
+      "expo-secure-store",
+      [
+        "@react-native-google-signin/google-signin",
+        {
+          "iosUrlScheme": "com.googleusercontent.apps.SUBSTITUA_PELO_ID_IOS"
+        }
+      ]
+    ],
     "android": {
       "package": "com.todo.mural"
     },

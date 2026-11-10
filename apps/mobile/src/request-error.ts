@@ -25,6 +25,7 @@ export function friendlyError(error: unknown): string {
         return 'Arraste a tarefa por uma distância menor.';
       case 'http': {
         const { status } = error.failure;
+        if (status === 401) return 'Entre com sua conta Google novamente.';
         if (status === 404) return 'O item pode ter sido removido.';
         if (status === 409)
           return 'Algo mudou enquanto você usava o app. Tente de novo.';
@@ -48,10 +49,8 @@ export function retryRead(failureCount: number, error: unknown): boolean {
 }
 
 export function logRequestError(error: unknown) {
-  // Warning and error logs can appear over the app in Expo Go.
   console.info(
     '[Mural] Falha na operação',
-    error,
-    error instanceof Error ? error.cause : undefined,
+    error instanceof RequestError ? error.failure : undefined,
   );
 }

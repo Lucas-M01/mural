@@ -1,5 +1,6 @@
 import { queryOptions } from '@tanstack/react-query';
 import { RequestError } from './request-error';
+import { endSession, getSession } from './session';
 
 export type List = {
   id: string;
@@ -82,6 +83,9 @@ async function request(
   signal?: AbortSignal,
 ): Promise<unknown> {
   const url = apiBase() + path;
+  const login = path === '/auth/google';
+  const token = login ? null : getSession();
+  if (!login && !token) throw new RequestError({ kind: 'http', status: 401 });
   const controller = new AbortController();
   const abort = () => controller.abort();
   let timedOut = false;
@@ -96,23 +100,21 @@ async function request(
     const response = await fetch(url, {
       method,
       signal: controller.signal,
-      ...(body && {
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body),
-      }),
+      headers: {
+        ...(token && { Authorization: `Bearer ${token}` }),
+        ...(body && { 'Content-Type': 'application/json' }),
+      },
+      ...(body && { body: JSON.stringify(body) }),
     }).catch((error: unknown) => {
       if (controller.signal.aborted) throw error;
       throw new RequestError({ kind: 'network' }, error);
     });
 
     if (!response.ok) {
-      const payload: unknown = await response
-        .json()
-        .catch((error: unknown) => error);
-      throw new RequestError(
-        { kind: 'http', status: response.status },
-        payload,
-      );
+      if (response.status === 401 && token) {
+        void endSession(token).catch(() => undefined);
+      }
+      throw new RequestError({ kind: 'http', status: response.status });
     }
 
     return response.status === 204 ? undefined : await response.json();
@@ -143,6 +145,12 @@ export const tasksQuery = (listId: string) =>
   });
 
 export const api = {
+  async signIn(serverAuthCode: string) {
+    const data = await request('/auth/google', 'POST', { serverAuthCode });
+    if (isRecord(data) && typeof data.token === 'string' && data.token)
+      return data.token;
+    throw new Error('A API retornou uma sessão inválida.');
+  },
   deleteList: (id: string) => request(`/lists/${id}`, 'DELETE'),
   createList: (input: Pick<List, 'title' | 'color'>) =>
     request('/lists', 'POST', input).then(readList),
