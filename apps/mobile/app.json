@@ -4,6 +4,7 @@
     "slug": "mural",
     "scheme": "mural",
     "version": "0.0.0",
+    "userInterfaceStyle": "automatic",
     "platforms": ["android", "ios"],
     "plugins": ["expo-router"]
   }
