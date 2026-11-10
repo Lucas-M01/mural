@@ -5,7 +5,28 @@
     "scheme": "mural",
     "version": "0.0.0",
     "userInterfaceStyle": "automatic",
-    "platforms": ["android", "ios"],
-    "plugins": ["expo-router"]
+    "platforms": [
+      "android",
+      "ios"
+    ],
+    "plugins": [
+      "expo-router"
+    ],
+    "android": {
+      "package": "com.todo.mural"
+    },
+    "ios": {
+      "bundleIdentifier": "com.todo.mural"
+    },
+    "extra": {
+      "router": {
+        "asyncRoutes": {
+          "web": true
+        }
+      },
+      "eas": {
+        "projectId": "e8200866-4c59-449d-b7e4-cd841d97d2dc"
+      }
+    }
   }
 }
