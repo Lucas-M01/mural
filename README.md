@@ -6,54 +6,50 @@ App mobile de notas e tarefas para duas pessoas. No app você pode criar listas 
 
 - Node.js 24 LTS e pnpm 11.1.3
 - Docker com o plugin Compose
-- Celular Android ou iOS com [Expo Go compatível com o SDK 58](https://expo.dev/go)
+- Celular Android ou iOS e uma conta Expo com acesso ao projeto EAS do Mural
+
+## Google Cloud
+
+1. No Google Auth Platform, configure a marca e a audiência do app. Se o projeto estiver em modo de teste, inclua as duas contas Google em **Test users**. Configure os escopos de identidade e `https://www.googleapis.com/auth/calendar.events` em **Data Access**. O login solicita o escopo do Calendar para obter autorização offline.
+2. Crie um cliente OAuth **Web application** no mesmo projeto. Use o ID em `GOOGLE_CLIENT_ID` na API e em `EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID` no app. Guarde o segredo correspondente em `GOOGLE_CLIENT_SECRET` somente na API.
+3. Para Android, crie um cliente OAuth **Android** com o package `com.todo.mural` de `apps/mobile/app.json` e o SHA-1 do certificado que assina o APK. Em `apps/mobile`, rode `eas credentials -p android` e selecione as credenciais do perfil **development** para consultar o SHA-1 do keystore. Também é possível ler o certificado do APK com `apksigner verify --print-certs caminho/do/app.apk`. Para um build distribuído pelo Google Play, cadastre também o SHA-1 do certificado de assinatura do app exibido no Play Console. Crie uma credencial Android por combinação de package e SHA-1.
+4. Para iOS, crie um cliente OAuth **iOS** com o bundle identifier `com.todo.mural`. Informe esse ID em `EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID` no ambiente do build e no Metro. O `app.json` declara o plugin de Google Sign-In sem Firebase e o `app.config.js` gera o `iosUrlScheme` invertendo o ID iOS.
+
+[Guia do Expo para autenticação Google](https://docs.expo.dev/guides/google-authentication/) · [Configuração do plugin sem Firebase](https://react-native-google-signin.github.io/docs/setting-up/expo)
 
 ## API e infraestrutura
 
-Na raiz do projeto, suba a API, o PostgreSQL e o Redis:
+Na raiz, copie `.env.example` para `.env`, preencha as credenciais Google e gere dois valores independentes com `openssl rand -base64 32` para `JWT_SECRET` e `TOKEN_ENCRYPTION_KEY`. Preserve a chave de criptografia enquanto houver refresh tokens no banco.
 
-```sh
-docker compose up --build --wait
-curl --fail http://localhost:3333/health
-```
+Para executar a pilha pelo Docker Compose, use `docker compose up --build --wait`. A API aplica as migrations ao iniciar e fica acessível pelo computador em [localhost:3333/docs](http://localhost:3333/docs/).
 
-O healthcheck deve retornar HTTP 200 com `{"status":"ok"}`. O contêiner da API aplica as migrations e executa o seed de desenvolvimento na inicialização. A documentação da API está em [localhost:3333/docs](http://localhost:3333/docs/).
-
-Para desenvolver a API com recarga automática, rode os comandos abaixo na raiz do projeto. Se você já subiu a pilha completa, pare o contêiner da API com `docker compose stop api` para liberar a porta 3333.
+Para testar com um celular na rede local, execute a API com recarga automática. Se o contêiner da API estiver rodando, pare-o com `docker compose stop api` para liberar a porta.
 
 ```sh
 docker compose up -d postgres redis
 pnpm install
-cp -n .env.example .env
 pnpm --filter @mural/api db:generate
 pnpm --filter @mural/api db:migrate
-pnpm --filter @mural/api db:seed
 pnpm api:dev
+curl --fail http://localhost:3333/health
 ```
 
-As URLs dos serviços em `.env.example` são para execução local. O Compose configura as URLs internas para a API. Caso a porta 3333 esteja ocupada, use outro valor de `PORT` no `.env`.
+O healthcheck deve retornar HTTP 200 com `{"status":"ok"}`. Use HTTPS para a API fora da rede de desenvolvimento.
 
-As rotas de listas e tarefas ficam em `/api/v1` e usam o usuário fixo do seed. Para experimentar no Swagger, crie uma lista com `POST /api/v1/lists` enviando `{"title":"Compras"}`. Use o ID retornado em `POST /api/v1/lists/{id}/tasks` para criar a primeira tarefa.
+O app envia o `serverAuthCode` do Google a `POST /api/v1/auth/google` e recebe um JWT com validade de sete dias. `/api/v1/me` e as rotas de listas e tarefas exigem o JWT como Bearer. As listas da antiga conta de desenvolvimento continuam no banco vinculadas àquela conta.
 
-## App no celular com Expo Go
+## Development build via EAS
 
-1. Siga os passos de desenvolvimento local da API acima e mantenha `pnpm api:dev` rodando em um terminal. O app precisa acessar a porta da API pela rede local.
-2. Conecte o celular e o computador à mesma rede Wi-Fi. Em outro terminal, na raiz do projeto, copie o exemplo de configuração do app:
+1. Instale o EAS CLI, autentique-se com `eas login` e confirme o acesso ao projeto definido em `apps/mobile/app.json`.
+2. Copie `apps/mobile/.env.example` para `apps/mobile/.env` e preencha os IDs OAuth públicos. Configure `EXPO_PUBLIC_API_URL` com a URL base acessível ao celular, por exemplo `http://192.168.1.100:3333` na mesma rede Wi-Fi. Confira `/health` no navegador do celular. Cadastre as mesmas variáveis públicas no ambiente **development** do EAS se elas precisarem estar disponíveis no build remoto. O ID iOS é necessário para configurar o esquema de URL durante o build iOS.
+3. Em `apps/mobile`, rode `eas build --profile development --platform android` ou `eas build --profile development --platform ios`. Para um dispositivo iOS físico, registre-o antes com `eas device:create`. Instale o binário gerado. Alterações no plugin ou no esquema iOS exigem um novo development build.
+4. Na raiz do projeto, execute `pnpm --filter @mural/mobile start --dev-client --lan`. Abra o development build no celular e escaneie o QR code do Metro. O módulo nativo de Google Sign-In requer o development build.
 
-   ```sh
-   cp -n apps/mobile/.env.example apps/mobile/.env
-   ```
+[Como criar um development build com EAS](https://docs.expo.dev/develop/development-builds/create-a-build/)
 
-3. Em `apps/mobile/.env`, defina `EXPO_PUBLIC_API_URL` com o IP do computador e a porta da API, por exemplo `http://192.168.1.100:3333`. No navegador do celular, abra esse endereço com `/health` no final e confira se aparece `{"status":"ok"}`. Se a página não abrir, confira o IP, a porta e o acesso à porta pelo firewall do computador.
-4. Inicie o Expo na raiz do projeto e escaneie o QR code no Android pelo Expo Go ou no iOS pela Câmera:
+## Validar o isolamento no celular
 
-   ```sh
-   pnpm --filter @mural/mobile start --go --lan
-   ```
-
-Na tela inicial, dê um nome à lista, escolha uma cor e toque em **Criar lista**. Abra a lista, adicione duas tarefas, toque no checkbox para marcar ou desmarcar e segure a alça **☰** para arrastar. Volte à home, escreva uma **Nota rápida**, escolha a lista de destino e salve. Abra a lista novamente para conferir a nota e a ordem das tarefas.
-
-Na tela da lista, toque em **Apagar lista** e confirme para excluir a lista e suas tarefas. Ao marcar uma tarefa, ela passa para **Concluídas** com o título riscado. Desmarque para voltar a **A fazer**, onde é possível reordenar por arraste.
+Entre com a primeira conta Google e crie uma lista chamada **Conta A** com uma tarefa. Toque em **Sair**, entre com a segunda conta e confirme que **Conta A** não aparece. Crie **Conta B**, saia e volte à primeira conta. Confirme que ela vê **Conta A** e a tarefa original, sem acesso a **Conta B**. Feche e reabra o app para conferir a restauração da sessão ativa pelo SecureStore.
 
 ## Design do app mobile
 
@@ -69,7 +65,7 @@ O tema segue a aparência do sistema, com fundo azul-escuro e destaques violeta 
 
 Use classes semânticas como `bg-surface text-ink`, `gap-md` e `rounded-card`. Os tamanhos são unidades lógicas do React Native. Os controles interativos das telas reservam pelo menos 44 × 44. Os componentes compartilhados `Button`, `Input`, `Card`, `Checkbox`, `EmptyState` e `ErrorState` ficam em `apps/mobile/src/ui.tsx`.
 
-Para conferir no Expo Go, alterne a aparência nas configurações do celular e observe a home e a tela da lista, incluindo o cabeçalho, os campos e a paleta.
+Para conferir no development build, alterne a aparência nas configurações do celular e observe a home e a tela da lista, incluindo o cabeçalho, os campos e a paleta.
 
 ## Checagens
 
