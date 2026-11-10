@@ -61,14 +61,19 @@ export default function HomeScreen() {
     <SafeAreaView className="flex-1 bg-canvas">
       <ScrollView keyboardShouldPersistTaps="handled">
         <View className="gap-xl p-xl">
-          <View>
+          <View className="gap-xs rounded-card bg-brand-surface p-xl">
+            <Text className="text-caption font-semibold uppercase text-brand-ink">
+              Seu espaço de organização
+            </Text>
             <Text
               accessibilityRole="header"
               className="text-display font-bold text-ink"
             >
               Mural
             </Text>
-            <Text className="mt-xs text-body text-muted">Notas e tarefas</Text>
+            <Text className="text-body text-muted">
+              Notas e tarefas em um só lugar.
+            </Text>
           </View>
 
           <Card className="gap-md p-lg">
@@ -107,7 +112,7 @@ export default function HomeScreen() {
                         }}
                         onPress={() => setSelectedList(list.id)}
                         disabled={saveNote.isPending}
-                        className={`min-h-tap min-w-tap max-w-full flex-row items-center gap-sm rounded-control border px-md py-sm ${selected ? 'border-brand bg-subtle' : 'border-outline bg-surface'}`}
+                        className={`min-h-tap min-w-tap max-w-full flex-row items-center gap-sm rounded-control border px-md py-sm ${selected ? 'border-brand-ink bg-subtle' : 'border-outline bg-surface'}`}
                       >
                         <ListColor color={list.color} />
                         <Text className="shrink text-caption text-ink">

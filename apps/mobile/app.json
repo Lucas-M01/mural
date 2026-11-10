@@ -5,13 +5,8 @@
     "scheme": "mural",
     "version": "0.0.0",
     "userInterfaceStyle": "automatic",
-    "platforms": [
-      "android",
-      "ios"
-    ],
-    "plugins": [
-      "expo-router"
-    ],
+    "platforms": ["android", "ios"],
+    "plugins": ["expo-router"],
     "android": {
       "package": "com.todo.mural"
     },
