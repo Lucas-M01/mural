@@ -12,7 +12,8 @@ import Animated, { useAnimatedRef } from 'react-native-reanimated';
 import Sortable from 'react-native-sortables';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { api, listsQuery, tasksQuery, type Task } from '../../src/api';
-import { Button, ErrorMessage, Palette } from '../../src/ui';
+import { RequestError } from '../../src/request-error';
+import { Button, ErrorMessage, Palette, QueryWarning } from '../../src/ui';
 
 type ChecklistChange =
   | { action: 'create'; title: string }
@@ -22,6 +23,12 @@ type ChecklistChange =
       tasks: Task[];
       positions: Pick<Task, 'id' | 'position'>[];
     };
+
+const checklistErrors = {
+  create: 'Não foi possível confirmar a criação da tarefa.',
+  toggle: 'Não foi possível confirmar a marcação da tarefa.',
+  reorder: 'Não foi possível confirmar a nova ordem.',
+};
 
 function reorderChange(tasks: Task[]): ChecklistChange {
   const slots = tasks.map((task) => task.position).sort((a, b) => a - b);
@@ -56,9 +63,7 @@ export default function ListScreen() {
           return api.toggleTask(change.id);
         case 'reorder':
           if (change.positions.length > 100) {
-            throw new Error(
-              'Muitas posições mudaram. Arraste por uma distância menor.',
-            );
+            throw new RequestError({ kind: 'reorder-limit' });
           }
           return api.reorderTasks(change.positions);
       }
@@ -72,12 +77,13 @@ export default function ListScreen() {
     },
     onSuccess: (_, change) => {
       if (change.action === 'create') setTitle('');
+      return client.invalidateQueries({ queryKey: query.queryKey });
     },
     onError: (_, change, previous) => {
       if (change.action === 'reorder')
         client.setQueryData(query.queryKey, previous);
+      void client.invalidateQueries({ queryKey: query.queryKey });
     },
-    onSettled: () => client.invalidateQueries({ queryKey: query.queryKey }),
   });
 
   const changeColor = useMutation({
@@ -98,6 +104,15 @@ export default function ListScreen() {
       <Stack.Screen options={{ title: list?.title ?? 'Lista' }} />
       <Animated.ScrollView ref={scrollRef} keyboardShouldPersistTaps="handled">
         <View className="gap-4 p-5">
+          {lists.error && (
+            <QueryWarning
+              error={lists.error}
+              message="Não foi possível carregar os detalhes da lista."
+              hasData={list !== undefined}
+              refreshing={lists.isFetching}
+              retry={() => void lists.refetch()}
+            />
+          )}
           {list && (
             <View
               className="gap-3 rounded-2xl border border-stone-300 p-4"
@@ -113,7 +128,12 @@ export default function ListScreen() {
                   color !== list.color && changeColor.mutate(color)
                 }
               />
-              {changeColor.error && <ErrorMessage error={changeColor.error} />}
+              {changeColor.error && (
+                <ErrorMessage
+                  error={changeColor.error}
+                  message="Não foi possível confirmar a mudança de cor."
+                />
+              )}
             </View>
           )}
           <View className="gap-3 rounded-2xl bg-white p-4">
@@ -135,13 +155,22 @@ export default function ListScreen() {
               }
             />
           </View>
-          {checklist.error && <ErrorMessage error={checklist.error} />}
+          {checklist.error && checklist.variables && (
+            <ErrorMessage
+              error={checklist.error}
+              message={checklistErrors[checklist.variables.action]}
+            />
+          )}
           {tasks.isPending && (
             <ActivityIndicator accessibilityLabel="Carregando tarefas" />
           )}
           {tasks.error && (
-            <ErrorMessage
+            <QueryWarning
               error={tasks.error}
+              message="Não foi possível carregar as tarefas."
+              hasData={tasks.data !== undefined}
+              refreshing={tasks.isFetching}
+
               retry={() => void tasks.refetch()}
             />
           )}

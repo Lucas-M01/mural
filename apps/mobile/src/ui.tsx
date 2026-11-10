@@ -1,4 +1,5 @@
 import { Pressable, Text, View } from 'react-native';
+import { friendlyError } from './request-error';
 
 const colors = [
   { label: 'Branco', value: '#FFFFFF' },
@@ -64,19 +65,51 @@ export function Button({
 
 export function ErrorMessage({
   error,
-  retry,
+  message,
 }: {
-  error: Error;
-  retry?: () => void;
+  error: unknown;
+  message: string;
 }) {
   return (
-    <View className="gap-2 rounded-xl bg-red-50 p-3">
-      <Text accessibilityRole="alert" className="text-red-800">
-        {error.message === 'Network request failed'
-          ? 'Não foi possível conectar à API. Confira a rede e o endereço configurado.'
-          : error.message}
+    <Text
+      accessibilityRole="alert"
+      className="rounded-xl bg-red-50 p-3 text-red-800"
+    >
+      {message} {friendlyError(error)}
+    </Text>
+  );
+}
+
+export function QueryWarning({
+  error,
+  message,
+  hasData,
+  refreshing,
+  retry,
+}: {
+  error: unknown;
+  message: string;
+  hasData: boolean;
+  refreshing: boolean;
+  retry: () => void;
+}) {
+  return (
+    <View className="rounded-xl bg-stone-100 px-3 pt-3">
+      <Text accessibilityRole="alert" className="text-sm text-stone-700">
+        {hasData ? 'Mostrando a última versão carregada.' : message}{' '}
+        {friendlyError(error)}
       </Text>
-      {retry && <Button label="Tentar novamente" onPress={retry} />}
+      <Pressable
+        accessibilityRole="button"
+        accessibilityState={{ disabled: refreshing, busy: refreshing }}
+        disabled={refreshing}
+        onPress={retry}
+        className="min-h-11 self-start justify-center"
+      >
+        <Text className="font-semibold text-stone-800 underline">
+          {refreshing ? 'Tentando…' : 'Tentar de novo'}
+        </Text>
+      </Pressable>
     </View>
   );
 }

@@ -11,7 +11,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { api, listsQuery, tasksQuery } from '../src/api';
-import { Button, ErrorMessage, Palette } from '../src/ui';
+import { Button, ErrorMessage, Palette, QueryWarning } from '../src/ui';
 
 export default function HomeScreen() {
   const client = useQueryClient();
@@ -120,7 +120,12 @@ export default function HomeScreen() {
                 saveNote.mutate({ listId: noteList.id, text: note.trim() })
               }
             />
-            {saveNote.error && <ErrorMessage error={saveNote.error} />}
+            {saveNote.error && (
+              <ErrorMessage
+                error={saveNote.error}
+                message="Não foi possível confirmar o salvamento da nota."
+              />
+            )}
           </View>
 
           <View className="gap-3">
@@ -134,8 +139,11 @@ export default function HomeScreen() {
               <ActivityIndicator accessibilityLabel="Carregando listas" />
             )}
             {lists.error && (
-              <ErrorMessage
+              <QueryWarning
                 error={lists.error}
+                message="Não foi possível carregar suas listas."
+                hasData={lists.data !== undefined}
+                refreshing={lists.isFetching}
                 retry={() => void lists.refetch()}
               />
             )}
@@ -190,7 +198,12 @@ export default function HomeScreen() {
               disabled={!title.trim() || createList.isPending}
               onPress={() => createList.mutate({ title: title.trim(), color })}
             />
-            {createList.error && <ErrorMessage error={createList.error} />}
+            {createList.error && (
+              <ErrorMessage
+                error={createList.error}
+                message="Não foi possível confirmar a criação da lista."
+              />
+            )}
           </View>
         </View>
       </ScrollView>

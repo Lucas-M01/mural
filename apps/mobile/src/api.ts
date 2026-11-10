@@ -1,4 +1,5 @@
 import { queryOptions } from '@tanstack/react-query';
+import { RequestError } from './request-error';
 
 export type List = {
   id: string;
@@ -72,44 +73,73 @@ function readArray<T>(
   throw new Error('A API retornou dados inválidos.');
 }
 
+const requestTimeoutMs = 8000;
+
 async function request(
   path: string,
   method = 'GET',
   body?: object,
+  signal?: AbortSignal,
 ): Promise<unknown> {
-  const response = await fetch(apiBase() + path, {
-    method,
-    ...(body && {
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body),
-    }),
-  });
+  const url = apiBase() + path;
+  const controller = new AbortController();
+  const abort = () => controller.abort();
+  let timedOut = false;
+  if (signal?.aborted) abort();
+  signal?.addEventListener('abort', abort);
+  const timer = setTimeout(() => {
+    timedOut = true;
+    abort();
+  }, requestTimeoutMs);
 
-  if (!response.ok) {
-    const payload: unknown = await response.json().catch(() => null);
-    if (
-      isRecord(payload) &&
-      isRecord(payload.error) &&
-      typeof payload.error.message === 'string'
-    ) {
-      throw new Error(payload.error.message);
+  try {
+    const response = await fetch(url, {
+      method,
+      signal: controller.signal,
+      ...(body && {
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      }),
+    }).catch((error: unknown) => {
+      if (controller.signal.aborted) throw error;
+      throw new RequestError({ kind: 'network' }, error);
+    });
+
+    if (!response.ok) {
+      const payload: unknown = await response
+        .json()
+        .catch((error: unknown) => error);
+      throw new RequestError(
+        { kind: 'http', status: response.status },
+        payload,
+      );
     }
-    throw new Error(`A API retornou HTTP ${response.status}.`);
-  }
 
-  return response.status === 204 ? undefined : response.json();
+    return response.status === 204 ? undefined : await response.json();
+  } catch (error) {
+    if (timedOut) throw new RequestError({ kind: 'timeout' }, error);
+    throw error;
+  } finally {
+    clearTimeout(timer);
+    signal?.removeEventListener('abort', abort);
+  }
 }
 
 export const listsQuery = queryOptions({
   queryKey: ['lists'],
-  queryFn: () => request('/lists').then((data) => readArray(data, isList)),
+  queryFn: ({ signal }) =>
+    request('/lists', 'GET', undefined, signal).then((data) =>
+      readArray(data, isList),
+    ),
 });
 
 export const tasksQuery = (listId: string) =>
   queryOptions({
     queryKey: ['lists', listId, 'tasks'],
-    queryFn: () =>
-      request(`/lists/${listId}/tasks`).then((data) => readArray(data, isTask)),
+    queryFn: ({ signal }) =>
+      request(`/lists/${listId}/tasks`, 'GET', undefined, signal).then((data) =>
+        readArray(data, isTask),
+      ),
   });
 
 export const api = {

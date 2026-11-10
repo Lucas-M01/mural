@@ -8,7 +8,7 @@
   "scripts": {
     "lint": "eslint . && prettier --check .",
     "typecheck": "pnpm -r typecheck",
-    "test": "pnpm --filter @mural/api test",
+    "test": "pnpm -r test",
     "format": "prettier --write .",
     "api:dev": "pnpm --filter @mural/api dev"
   },
