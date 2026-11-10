@@ -5,6 +5,7 @@ App pessoal de notas e tarefas (estilo Google Keep) para uso de duas pessoas, co
 ## Regras para o agente
 
 - Trabalhe **uma fase por vez** (ver "Plano de fases"). Não implemente nada de fases futuras.
+- Antes de iniciar cada fase, crie uma branch exclusiva a partir da `main`, por exemplo `git checkout -b feat/fase-1-api`. Mantenha as mudanças da fase nessa branch até a validação, para que ela possa ser descartada sem afetar a `main`.
 - Antes de encerrar uma tarefa: rode `pnpm lint`, `pnpm typecheck` e `pnpm test`. Corrija o que quebrar.
 - Ao concluir cada tarefa com lint, typecheck e testes passando, faça `git add` e `git commit` com mensagem Conventional Commits.
 - TypeScript em modo `strict`. Proibido `any` (use `unknown` + validação).
