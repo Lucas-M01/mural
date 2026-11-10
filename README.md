@@ -53,17 +53,19 @@ As rotas de listas e tarefas ficam em `/api/v1` e usam o usuário fixo do seed. 
 
 Na tela inicial, dê um nome à lista, escolha uma cor e toque em **Criar lista**. Abra a lista, adicione duas tarefas, toque no checkbox para marcar ou desmarcar e segure a alça **☰** para arrastar. Volte à home, escreva uma **Nota rápida**, escolha a lista de destino e salve. Abra a lista novamente para conferir a nota e a ordem das tarefas.
 
+Na tela da lista, toque em **Apagar lista** e confirme para excluir a lista e suas tarefas. Ao marcar uma tarefa, ela passa para **Concluídas** com o título riscado. Desmarque para voltar a **A fazer**, onde é possível reordenar por arraste.
+
 ## Design do app mobile
 
-O tema segue a aparência do sistema. A fonte dos tokens é `apps/mobile/src/tokens.json`. O Tailwind expõe esses valores como classes NativeWind e a navegação usa as mesmas cores no cabeçalho e na barra de status.
+O tema segue a aparência do sistema, com fundo azul-escuro e destaques violeta no modo escuro, e superfícies claras com a mesma família de cores no modo claro. A fonte dos tokens é `apps/mobile/src/tokens.json`. O Tailwind expõe esses valores como classes NativeWind e a navegação usa as mesmas cores no cabeçalho e na barra de status.
 
-| Grupo            | Tokens                                                                                                                                                 |
-| ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Cores            | `canvas`, `surface`, `subtle`, `ink`, `muted`, `outline`, `brand`, `on-brand`, `pressed`, `danger` e `danger-surface`, com valores para claro e escuro |
-| Paleta de listas | Branco, amarelo, rosa, verde, azul e lilás. Os valores HEX persistidos aparecem como marcadores e amostras de cor                                      |
-| Espaçamento      | `xs` 4, `sm` 8, `md` 12, `lg` 16 e `xl` 20. As dimensões de controles incluem `tap` 44, `row` 56, `note` 80 e `indicator` 24                           |
-| Tipografia       | Tamanho e altura de linha em `caption` 14/20, `body` 16/24, `heading` 20/28 e `display` 36/44                                                          |
-| Raios            | `indicator` 6, `control` 12, `card` 16 e `pill` 999                                                                                                    |
+| Grupo            | Tokens                                                                                                                                                                                            |
+| ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Cores            | `canvas`, `surface`, `subtle`, `ink`, `muted`, `outline`, `brand`, `on-brand`, `pressed`, `brand-surface`, `brand-ink`, `completed`, `danger` e `danger-surface`, com valores para claro e escuro |
+| Paleta de listas | Branco, amarelo, rosa, verde, azul e lilás. Os valores HEX persistidos aparecem como marcadores e amostras de cor                                                                                 |
+| Espaçamento      | `xs` 4, `sm` 8, `md` 12, `lg` 16 e `xl` 20. As dimensões de controles incluem `tap` 44, `row` 56, `note` 80 e `indicator` 24                                                                      |
+| Tipografia       | Tamanho e altura de linha em `caption` 14/20, `body` 16/24, `heading` 20/28 e `display` 36/44                                                                                                     |
+| Raios            | `indicator` 6, `control` 12, `card` 16 e `pill` 999                                                                                                                                               |
 
 Use classes semânticas como `bg-surface text-ink`, `gap-md` e `rounded-card`. Os tamanhos são unidades lógicas do React Native. Os controles interativos das telas reservam pelo menos 44 × 44. Os componentes compartilhados `Button`, `Input`, `Card`, `Checkbox`, `EmptyState` e `ErrorState` ficam em `apps/mobile/src/ui.tsx`.
 

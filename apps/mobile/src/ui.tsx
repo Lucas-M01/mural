@@ -16,12 +16,14 @@ export function Button({
   disabled,
   busy,
   quiet,
+  destructive,
 }: {
   label: string;
   onPress: () => void;
   disabled?: boolean;
   busy?: boolean;
   quiet?: boolean;
+  destructive?: boolean;
 }) {
   return (
     <Pressable
@@ -29,10 +31,10 @@ export function Button({
       accessibilityState={{ disabled, busy }}
       disabled={disabled}
       onPress={onPress}
-      className={`min-h-tap min-w-tap items-center justify-center rounded-control px-lg py-sm ${quiet ? 'self-start bg-subtle active:bg-surface' : disabled ? 'bg-subtle' : 'bg-brand active:bg-pressed'}`}
+      className={`min-h-tap min-w-tap items-center justify-center rounded-control px-lg py-sm ${disabled ? 'bg-subtle' : destructive ? 'bg-danger-surface active:bg-subtle' : quiet ? 'bg-subtle active:bg-surface' : 'bg-brand active:bg-pressed'} ${quiet ? 'self-start' : ''}`}
     >
       <Text
-        className={`text-center text-body font-semibold ${disabled ? 'text-muted' : quiet ? 'text-ink underline' : 'text-on-brand'}`}
+        className={`text-center text-body font-semibold ${disabled ? 'text-muted' : destructive ? 'text-danger' : quiet ? 'text-ink underline' : 'text-on-brand'}`}
       >
         {label}
       </Text>
@@ -94,7 +96,7 @@ export function Checkbox({
       className="min-h-row min-w-tap flex-1 flex-row items-center gap-md p-md"
     >
       <View
-        className={`h-indicator w-indicator items-center justify-center rounded-indicator border ${checked ? 'border-brand bg-brand' : 'border-outline'}`}
+        className={`h-indicator w-indicator items-center justify-center rounded-indicator border ${checked ? 'border-brand-ink bg-brand' : 'border-outline'}`}
       >
         {checked && (
           <Text className="text-caption font-bold text-on-brand">✓</Text>

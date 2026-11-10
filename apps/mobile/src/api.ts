@@ -143,6 +143,7 @@ export const tasksQuery = (listId: string) =>
   });
 
 export const api = {
+  deleteList: (id: string) => request(`/lists/${id}`, 'DELETE'),
   createList: (input: Pick<List, 'title' | 'color'>) =>
     request('/lists', 'POST', input).then(readList),
   updateColor: (id: string, color: string) =>

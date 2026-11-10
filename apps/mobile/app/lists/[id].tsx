@@ -1,11 +1,12 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Stack, useLocalSearchParams } from 'expo-router';
-import { useState } from 'react';
-import { ActivityIndicator, Text, View } from 'react-native';
+import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
+import { useMemo, useState, type ReactNode } from 'react';
+import { ActivityIndicator, Alert, Text, View } from 'react-native';
 import Animated, { useAnimatedRef } from 'react-native-reanimated';
 import Sortable from 'react-native-sortables';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { api, listsQuery, tasksQuery, type Task } from '../../src/api';
+import { reorderPending } from '../../src/reorder-pending';
 import { RequestError } from '../../src/request-error';
 import { useTheme } from '../../src/theme';
 import tokens from '../../src/tokens.json';
@@ -35,27 +36,67 @@ const checklistErrors = {
   reorder: 'Não foi possível confirmar a nova ordem.',
 };
 
-function reorderChange(tasks: Task[]): ChecklistChange {
-  const slots = tasks.map((task) => task.position).sort((a, b) => a - b);
-  const hasTies = new Set(slots).size !== slots.length;
-  const positions: Pick<Task, 'id' | 'position'>[] = [];
-  const reordered = tasks.map((task, index) => {
-    const position = hasTies ? index : slots[index];
-    if (task.position === position) return task;
-    positions.push({ id: task.id, position });
-    return { ...task, position };
-  });
-  return { action: 'reorder', tasks: reordered, positions };
+function TaskRow({
+  item,
+  disabled,
+  onToggle,
+  children,
+}: {
+  item: Task;
+  disabled: boolean;
+  onToggle: () => void;
+  children?: ReactNode;
+}) {
+  return (
+    <Card className="flex-row items-center">
+      <Checkbox
+        label={item.title}
+        checked={item.isChecked}
+        disabled={disabled}
+        onPress={onToggle}
+      >
+        <View className="flex-1">
+          <Text
+            className={
+              item.isChecked
+                ? 'text-body text-completed line-through'
+                : 'text-body text-ink'
+            }
+          >
+            {item.title}
+          </Text>
+          {item.notes && item.notes !== item.title && (
+            <Text
+              className={
+                item.isChecked
+                  ? 'mt-xs text-caption text-completed'
+                  : 'mt-xs text-caption text-muted'
+              }
+            >
+              {item.notes}
+            </Text>
+          )}
+        </View>
+      </Checkbox>
+      {children}
+    </Card>
+  );
 }
 
 export default function ListScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { colors } = useTheme();
+  const router = useRouter();
   const client = useQueryClient();
   const lists = useQuery(listsQuery);
   const list = lists.data?.find((item) => item.id === id);
   const query = tasksQuery(id);
   const tasks = useQuery(query);
+  const pending = useMemo(
+    () => tasks.data?.filter((task) => !task.isChecked) ?? [],
+    [tasks.data],
+  );
+  const completed = tasks.data?.filter((task) => task.isChecked) ?? [];
   const scrollRef = useAnimatedRef<Animated.ScrollView>();
   const [title, setTitle] = useState('');
   const [dragging, setDragging] = useState(false);
@@ -75,10 +116,19 @@ export default function ListScreen() {
       }
     },
     onMutate: async (change) => {
-      if (change.action !== 'reorder') return;
+      if (change.action === 'create') return;
       await client.cancelQueries({ queryKey: query.queryKey });
       const previous = client.getQueryData(query.queryKey);
-      client.setQueryData(query.queryKey, change.tasks);
+      client.setQueryData(
+        query.queryKey,
+        change.action === 'reorder'
+          ? change.tasks
+          : previous?.map((task) =>
+              task.id === change.id
+                ? { ...task, isChecked: !task.isChecked }
+                : task,
+            ),
+      );
       return previous;
     },
     onSuccess: (_, change) => {
@@ -86,7 +136,7 @@ export default function ListScreen() {
       return client.invalidateQueries({ queryKey: query.queryKey });
     },
     onError: (_, change, previous) => {
-      if (change.action === 'reorder')
+      if (change.action !== 'create')
         client.setQueryData(query.queryKey, previous);
       void client.invalidateQueries({ queryKey: query.queryKey });
     },
@@ -101,7 +151,35 @@ export default function ListScreen() {
     },
   });
 
-  const disabled = dragging || checklist.isPending;
+  const removeList = useMutation({
+    mutationFn: () => api.deleteList(id),
+    onSuccess: async () => {
+      const filter = { queryKey: listsQuery.queryKey, exact: true };
+      await client.cancelQueries(filter);
+      client.setQueryData(listsQuery.queryKey, (current) =>
+        current?.filter((item) => item.id !== id),
+      );
+      void client.invalidateQueries(filter);
+      router.dismissTo('/');
+    },
+  });
+
+  const disabled = dragging || checklist.isPending || removeList.isPending;
+  function confirmRemoval() {
+    if (!list) return;
+    Alert.alert(
+      'Apagar lista?',
+      `A lista “${list.title}” e todas as tarefas dela serão apagadas.`,
+      [
+        { text: 'Cancelar', style: 'cancel' },
+        {
+          text: 'Apagar lista',
+          style: 'destructive',
+          onPress: () => removeList.mutate(),
+        },
+      ],
+    );
+  }
   return (
     <SafeAreaView
       edges={['bottom', 'left', 'right']}
@@ -131,7 +209,7 @@ export default function ListScreen() {
               </View>
               <Palette
                 value={list.color}
-                disabled={changeColor.isPending}
+                disabled={changeColor.isPending || removeList.isPending}
                 onChange={(color) =>
                   color !== list.color && changeColor.mutate(color)
                 }
@@ -140,6 +218,19 @@ export default function ListScreen() {
                 <ErrorState
                   error={changeColor.error}
                   message="Não foi possível confirmar a mudança de cor."
+                />
+              )}
+              <Button
+                label={removeList.isPending ? 'Apagando…' : 'Apagar lista'}
+                onPress={confirmRemoval}
+                disabled={disabled || changeColor.isPending}
+                busy={removeList.isPending}
+                destructive
+              />
+              {removeList.error && (
+                <ErrorState
+                  error={removeList.error}
+                  message="Não foi possível confirmar a exclusão da lista."
                 />
               )}
             </Card>
@@ -184,67 +275,101 @@ export default function ListScreen() {
               }}
             />
           )}
-          {tasks.data?.length === 0 && (
-            <EmptyState message="Esta lista ainda não tem tarefas." />
-          )}
-          {tasks.data && tasks.data.length > 0 && (
+          {tasks.data && (
             <>
-              {tasks.data.length > 1 && (
-                <Text className="text-body text-muted">
-                  Segure a alça ☰ e arraste para reordenar.
+              <View className="gap-sm">
+                <Text
+                  accessibilityRole="header"
+                  className="text-heading font-bold text-ink"
+                >
+                  A fazer · {pending.length}
                 </Text>
-              )}
-              <Sortable.Grid
-                columns={1}
-                customHandle
-                data={tasks.data}
-                dragActivationDelay={180}
-                keyExtractor={(task) => task.id}
-                onDragStart={() => setDragging(true)}
-                onDragEnd={({ data, fromIndex, toIndex }) => {
-                  setDragging(false);
-                  if (fromIndex !== toIndex)
-                    checklist.mutate(reorderChange(data));
-                }}
-                overDrag="vertical"
-                rowGap={tokens.spacing.sm}
-                scrollableRef={scrollRef}
-                sortEnabled={!checklist.isPending && tasks.data.length > 1}
-                renderItem={({ item }) => (
-                  <Card className="flex-row items-center">
-                    <Checkbox
-                      label={item.title}
-                      checked={item.isChecked}
-                      disabled={disabled}
-                      onPress={() =>
-                        checklist.mutate({ action: 'toggle', id: item.id })
+                {pending.length === 0 ? (
+                  <EmptyState
+                    message={
+                      completed.length
+                        ? 'Tudo feito por aqui!'
+                        : 'Esta lista ainda não tem tarefas.'
+                    }
+                  />
+                ) : (
+                  <>
+                    {pending.length > 1 && (
+                      <Text className="text-caption text-muted">
+                        Segure a alça ☰ e arraste para reordenar.
+                      </Text>
+                    )}
+                    <Sortable.Grid
+                      columns={1}
+                      customHandle
+                      data={pending}
+                      dragActivationDelay={180}
+                      keyExtractor={(task) => task.id}
+                      onDragStart={() => setDragging(true)}
+                      onDragEnd={({ data, fromIndex, toIndex }) => {
+                        setDragging(false);
+                        if (fromIndex === toIndex) return;
+                        const current = client.getQueryData(query.queryKey);
+                        const change =
+                          current &&
+                          reorderPending(
+                            current,
+                            data.map((task) => task.id),
+                          );
+                        if (change)
+                          checklist.mutate({ action: 'reorder', ...change });
+                      }}
+                      overDrag="vertical"
+                      rowGap={tokens.spacing.sm}
+                      scrollableRef={scrollRef}
+                      sortEnabled={
+                        !checklist.isPending &&
+                        !removeList.isPending &&
+                        pending.length > 1
                       }
-                    >
-                      <View className="flex-1">
-                        <Text
-                          className={
-                            item.isChecked
-                              ? 'text-body text-muted line-through'
-                              : 'text-body text-ink'
+                      renderItem={({ item }) => (
+                        <TaskRow
+                          item={item}
+                          disabled={disabled}
+                          onToggle={() =>
+                            checklist.mutate({ action: 'toggle', id: item.id })
                           }
                         >
-                          {item.title}
-                        </Text>
-                        {item.notes && item.notes !== item.title && (
-                          <Text className="mt-xs text-caption text-muted">
-                            {item.notes}
-                          </Text>
-                        )}
-                      </View>
-                    </Checkbox>
-                    <Sortable.Handle>
-                      <View className="min-h-tap min-w-tap items-center justify-center">
-                        <Text className="text-heading text-muted">☰</Text>
-                      </View>
-                    </Sortable.Handle>
-                  </Card>
+                          {pending.length > 1 && (
+                            <Sortable.Handle>
+                              <View className="min-h-tap min-w-tap items-center justify-center">
+                                <Text className="text-heading text-brand-ink">
+                                  ☰
+                                </Text>
+                              </View>
+                            </Sortable.Handle>
+                          )}
+                        </TaskRow>
+                      )}
+                    />
+                  </>
                 )}
-              />
+              </View>
+              {completed.length > 0 && (
+                <View className="gap-sm">
+                  <Text
+                    accessibilityRole="header"
+                    className="text-heading font-bold text-completed"
+                  >
+                    Concluídas · {completed.length}
+                  </Text>
+                  {completed.map((item) => (
+                    <TaskRow
+                      key={item.id}
+                      item={item}
+                      disabled={disabled}
+                      onToggle={() =>
+                        checklist.mutate({ action: 'toggle', id: item.id })
+                      }
+                    />
+                  ))}
+                </View>
+              )}
             </>
           )}
         </View>
