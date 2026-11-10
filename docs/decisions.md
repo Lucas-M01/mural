@@ -15,3 +15,9 @@
 - Novas tarefas vão para o fim da lista. Empates de posição usam o ID como segundo critério de ordenação. A reordenação aceita até 100 tarefas por lote, exige IDs distintos e aplica o lote em uma transação.
 - A consulta padrão omite tarefas excluídas. Com `updatedSince`, retorna registros atualizados depois do instante informado, inclusive exclusões, identificadas por `deletedAt`. Excluir uma lista remove suas tarefas e associações em cascata.
 - Os testes de services e rotas usam um PostgreSQL separado no Compose, em armazenamento temporário.
+
+## Fase 2
+
+- A nota rápida vira uma tarefa na lista escolhida na home. A primeira linha fornece o título e o texto completo fica no campo de notas.
+- O app usa o endereço base de `EXPO_PUBLIC_API_URL` e acrescenta `/api/v1`. Para testar pela rede local, o celular acessa a API de desenvolvimento executada no computador.
+- A reordenação preserva as posições existentes quando são distintas e envia apenas as posições que mudaram. Se um arraste exceder o limite de 100 alterações da API, o app restaura a ordem e pede um movimento menor.

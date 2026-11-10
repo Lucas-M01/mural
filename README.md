@@ -1,6 +1,6 @@
 # Mural
 
-App mobile de notas e tarefas para duas pessoas. A API já permite criar listas privadas e gerenciar tarefas.
+App mobile de notas e tarefas para duas pessoas. No app você pode criar listas coloridas, salvar notas rápidas e organizar tarefas em checklists.
 
 ## Requisitos
 
@@ -35,14 +35,23 @@ As URLs dos serviços em `.env.example` são para execução local. O Compose co
 
 As rotas de listas e tarefas ficam em `/api/v1` e usam o usuário fixo do seed. Para experimentar no Swagger, crie uma lista com `POST /api/v1/lists` enviando `{"title":"Compras"}`. Use o ID retornado em `POST /api/v1/lists/{id}/tasks` para criar a primeira tarefa.
 
-## App no celular
+## App no celular com Expo Go
 
-```sh
-pnpm install
-pnpm --filter @mural/mobile start
-```
+1. Siga os passos de desenvolvimento local da API acima e mantenha `pnpm api:dev` rodando em um terminal. O app precisa acessar a porta da API pela rede local.
+2. Conecte o celular e o computador à mesma rede Wi-Fi. Em outro terminal, na raiz do projeto, copie o exemplo de configuração do app:
 
-Conecte o celular e o computador à mesma rede e abra o QR code no Expo Go. A tela inicial deve exibir **Mural**.
+   ```sh
+   cp -n apps/mobile/.env.example apps/mobile/.env
+   ```
+
+3. Em `apps/mobile/.env`, defina `EXPO_PUBLIC_API_URL` com o IP do computador e a porta da API, por exemplo `http://192.168.1.100:3333`. No navegador do celular, abra esse endereço com `/health` no final e confira se aparece `{"status":"ok"}`. Se a página não abrir, confira o IP, a porta e o acesso à porta pelo firewall do computador.
+4. Inicie o Expo na raiz do projeto e escaneie o QR code no Android pelo Expo Go ou no iOS pela Câmera:
+
+   ```sh
+   pnpm --filter @mural/mobile start --go --lan
+   ```
+
+Na tela inicial, dê um nome à lista, escolha uma cor e toque em **Criar lista**. Abra a lista, adicione duas tarefas, toque no checkbox para marcar ou desmarcar e segure a alça **☰** para arrastar. Volte à home, escreva uma **Nota rápida**, escolha a lista de destino e salve. Abra a lista novamente para conferir a nota e a ordem das tarefas.
 
 ## Checagens
 
