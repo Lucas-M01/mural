@@ -4,16 +4,28 @@ import { HealthResponse } from '@mural/shared';
 import scalar from '@scalar/fastify-api-reference';
 import Fastify from 'fastify';
 
-export function buildApp({ logger = true } = {}) {
-  const app = Fastify({ logger }).withTypeProvider<TypeBoxTypeProvider>();
+import type { PrismaClient } from '../generated/prisma/client.js';
+import { coreRoutes } from './core-routes.js';
+import { registerErrorHandlers } from './errors.js';
+
+export function buildApp({
+  logger = true,
+  db,
+}: { logger?: boolean; db?: PrismaClient } = {}) {
+  const app = Fastify({
+    logger,
+    ajv: { customOptions: { removeAdditional: false, coerceTypes: false } },
+  }).withTypeProvider<TypeBoxTypeProvider>();
+  registerErrorHandlers(app);
 
   app.register(swagger, {
     openapi: { info: { title: 'Mural API', version: '0.0.0' } },
   });
   app.register(scalar, { routePrefix: '/docs' });
 
-  app.after(() => {
-    app.get(
+  app.register(async (instance) => {
+    const api = instance.withTypeProvider<TypeBoxTypeProvider>();
+    api.get(
       '/health',
       {
         schema: {
@@ -24,6 +36,8 @@ export function buildApp({ logger = true } = {}) {
       async () => ({ status: 'ok' as const }),
     );
   });
+
+  if (db) app.register(coreRoutes, { prefix: '/api/v1', db });
 
   return app;
 }

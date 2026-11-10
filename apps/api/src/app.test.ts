@@ -4,6 +4,10 @@ import { buildApp } from './app.js';
 describe('API', { timeout: 60_000 }, () => {
   const app = buildApp({ logger: false });
 
+  app.get('/test-error', async () => {
+    throw new Error('informação interna');
+  });
+
   beforeAll(async () => {
     await app.ready();
   }, 60_000);
@@ -28,5 +32,19 @@ describe('API', { timeout: 60_000 }, () => {
     expect(response.statusCode).toBe(200);
     expect(response.headers['content-type']).toContain('text/html');
     expect(app.swagger().paths).toHaveProperty('/health.get');
+  });
+
+  it('usa o envelope de erro para rotas inexistentes e oculta erros internos', async () => {
+    const missing = await app.inject({ url: '/nao-existe' });
+    expect(missing.statusCode).toBe(404);
+    expect(missing.json()).toEqual({
+      error: { code: 'ROUTE_NOT_FOUND', message: 'Rota não encontrada.' },
+    });
+
+    const unexpected = await app.inject({ url: '/test-error' });
+    expect(unexpected.statusCode).toBe(500);
+    expect(unexpected.json()).toEqual({
+      error: { code: 'INTERNAL_ERROR', message: 'Erro interno da API.' },
+    });
   });
 });
