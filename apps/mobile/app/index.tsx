@@ -6,18 +6,28 @@ import {
   Pressable,
   ScrollView,
   Text,
-  TextInput,
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { api, listsQuery, tasksQuery } from '../src/api';
-import { Button, ErrorMessage, Palette, QueryWarning } from '../src/ui';
+import { useTheme } from '../src/theme';
+import tokens from '../src/tokens.json';
+import {
+  Button,
+  Card,
+  EmptyState,
+  ErrorState,
+  Input,
+  ListColor,
+  Palette,
+} from '../src/ui';
 
 export default function HomeScreen() {
+  const { colors } = useTheme();
   const client = useQueryClient();
   const lists = useQuery(listsQuery);
   const [title, setTitle] = useState('');
-  const [color, setColor] = useState('#FFFFFF');
+  const [color, setColor] = useState(tokens.listColors[0].value);
   const [note, setNote] = useState('');
   const [selectedList, setSelectedList] = useState<string>();
   const noteList =
@@ -48,31 +58,28 @@ export default function HomeScreen() {
   });
 
   return (
-    <SafeAreaView className="flex-1 bg-[#FFF9E8]">
+    <SafeAreaView className="flex-1 bg-canvas">
       <ScrollView keyboardShouldPersistTaps="handled">
-        <View className="gap-5 p-5">
+        <View className="gap-xl p-xl">
           <View>
             <Text
               accessibilityRole="header"
-              className="text-4xl font-bold text-stone-900"
+              className="text-display font-bold text-ink"
             >
               Mural
             </Text>
-            <Text className="mt-1 text-base text-stone-700">
-              Notas e tarefas
-            </Text>
+            <Text className="mt-xs text-body text-muted">Notas e tarefas</Text>
           </View>
 
-          <View className="gap-3 rounded-2xl bg-white p-4">
+          <Card className="gap-md p-lg">
             <Text
               accessibilityRole="header"
-              className="text-xl font-bold text-stone-900"
+              className="text-heading font-bold text-ink"
             >
               Nota rápida
             </Text>
-            <TextInput
+            <Input
               accessibilityLabel="Nota rápida"
-              className="min-h-20 rounded-xl border border-stone-300 px-3 py-2 text-base text-stone-900"
               editable={!!noteList && !saveNote.isPending}
               maxLength={10000}
               multiline
@@ -82,27 +89,28 @@ export default function HomeScreen() {
                   ? 'Escreva uma nota…'
                   : 'Crie uma lista para salvar notas'
               }
-              placeholderTextColor="#78716C"
-              textAlignVertical="top"
               value={note}
             />
             {noteList && (
-              <View className="gap-2">
-                <Text className="text-stone-700">Salvar na lista</Text>
-                <View className="flex-row flex-wrap gap-2">
+              <View className="gap-sm">
+                <Text className="text-body text-muted">Salvar na lista</Text>
+                <View className="flex-row flex-wrap gap-sm">
                   {lists.data?.map((list) => {
                     const selected = list.id === noteList.id;
                     return (
                       <Pressable
                         key={list.id}
                         accessibilityRole="radio"
-                        accessibilityState={{ selected }}
+                        accessibilityState={{
+                          selected,
+                          disabled: saveNote.isPending,
+                        }}
                         onPress={() => setSelectedList(list.id)}
                         disabled={saveNote.isPending}
-                        className="min-h-11 justify-center rounded-xl border border-stone-300 px-3"
-                        style={{ backgroundColor: list.color }}
+                        className={`min-h-tap min-w-tap max-w-full flex-row items-center gap-sm rounded-control border px-md py-sm ${selected ? 'border-brand bg-subtle' : 'border-outline bg-surface'}`}
                       >
-                        <Text className="text-stone-900">
+                        <ListColor color={list.color} />
+                        <Text className="shrink text-caption text-ink">
                           {selected ? '✓ ' : ''}
                           {list.title}
                         </Text>
@@ -121,71 +129,73 @@ export default function HomeScreen() {
               }
             />
             {saveNote.error && (
-              <ErrorMessage
+              <ErrorState
                 error={saveNote.error}
                 message="Não foi possível confirmar o salvamento da nota."
               />
             )}
-          </View>
+          </Card>
 
-          <View className="gap-3">
+          <View className="gap-md">
             <Text
               accessibilityRole="header"
-              className="text-xl font-bold text-stone-900"
+              className="text-heading font-bold text-ink"
             >
               Minhas listas
             </Text>
             {lists.isPending && (
-              <ActivityIndicator accessibilityLabel="Carregando listas" />
+              <ActivityIndicator
+                accessibilityLabel="Carregando listas"
+                color={colors.brand}
+              />
             )}
             {lists.error && (
-              <QueryWarning
+              <ErrorState
                 error={lists.error}
                 message="Não foi possível carregar suas listas."
-                hasData={lists.data !== undefined}
-                refreshing={lists.isFetching}
-                retry={() => void lists.refetch()}
+                retry={{
+                  hasData: lists.data !== undefined,
+                  refreshing: lists.isFetching,
+                  onPress: () => void lists.refetch(),
+                }}
               />
             )}
             {lists.data?.length === 0 && (
-              <Text className="text-stone-700">
-                Crie sua primeira lista abaixo.
-              </Text>
+              <EmptyState message="Crie sua primeira lista abaixo." />
             )}
             {lists.data?.map((list) => (
-              <Link
-                key={list.id}
-                href={{ pathname: '/lists/[id]', params: { id: list.id } }}
-                asChild
-              >
-                <Pressable
-                  accessibilityRole="link"
-                  className="min-h-14 justify-center rounded-xl border border-stone-300 px-4 py-3"
-                  style={{ backgroundColor: list.color }}
+              <Card key={list.id}>
+                <Link
+                  href={{ pathname: '/lists/[id]', params: { id: list.id } }}
+                  asChild
                 >
-                  <Text className="text-lg font-semibold text-stone-900">
-                    {list.title}
-                  </Text>
-                </Pressable>
-              </Link>
+                  <Pressable
+                    accessibilityRole="link"
+                    className="min-h-row flex-row items-center gap-md rounded-card px-lg py-md active:bg-subtle"
+                  >
+                    <ListColor color={list.color} />
+                    <Text className="shrink text-body font-semibold text-ink">
+                      {list.title}
+                    </Text>
+                  </Pressable>
+                </Link>
+              </Card>
             ))}
           </View>
 
-          <View className="gap-3 rounded-2xl bg-white p-4">
+          <Card className="gap-md p-lg">
             <Text
               accessibilityRole="header"
-              className="text-xl font-bold text-stone-900"
+              className="text-heading font-bold text-ink"
             >
               Nova lista
             </Text>
-            <TextInput
+            <Input
               accessibilityLabel="Nome da lista"
-              className="min-h-11 rounded-xl border border-stone-300 px-3 text-base text-stone-900"
               editable={!createList.isPending}
               maxLength={200}
               onChangeText={setTitle}
               placeholder="Nome da lista"
-              placeholderTextColor="#78716C"
               value={title}
             />
             <Palette
@@ -199,12 +209,12 @@ export default function HomeScreen() {
               onPress={() => createList.mutate({ title: title.trim(), color })}
             />
             {createList.error && (
-              <ErrorMessage
+              <ErrorState
                 error={createList.error}
                 message="Não foi possível confirmar a criação da lista."
               />
             )}
-          </View>
+          </Card>
         </View>
       </ScrollView>
     </SafeAreaView>

@@ -1,19 +1,24 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Stack, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
-import {
-  ActivityIndicator,
-  Pressable,
-  Text,
-  TextInput,
-  View,
-} from 'react-native';
+import { ActivityIndicator, Text, View } from 'react-native';
 import Animated, { useAnimatedRef } from 'react-native-reanimated';
 import Sortable from 'react-native-sortables';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { api, listsQuery, tasksQuery, type Task } from '../../src/api';
 import { RequestError } from '../../src/request-error';
-import { Button, ErrorMessage, Palette, QueryWarning } from '../../src/ui';
+import { useTheme } from '../../src/theme';
+import tokens from '../../src/tokens.json';
+import {
+  Button,
+  Card,
+  Checkbox,
+  EmptyState,
+  ErrorState,
+  Input,
+  ListColor,
+  Palette,
+} from '../../src/ui';
 
 type ChecklistChange =
   | { action: 'create'; title: string }
@@ -45,6 +50,7 @@ function reorderChange(tasks: Task[]): ChecklistChange {
 
 export default function ListScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
+  const { colors } = useTheme();
   const client = useQueryClient();
   const lists = useQuery(listsQuery);
   const list = lists.data?.find((item) => item.id === id);
@@ -99,28 +105,30 @@ export default function ListScreen() {
   return (
     <SafeAreaView
       edges={['bottom', 'left', 'right']}
-      className="flex-1 bg-[#FFF9E8]"
+      className="flex-1 bg-canvas"
     >
       <Stack.Screen options={{ title: list?.title ?? 'Lista' }} />
       <Animated.ScrollView ref={scrollRef} keyboardShouldPersistTaps="handled">
-        <View className="gap-4 p-5">
+        <View className="gap-lg p-xl">
           {lists.error && (
-            <QueryWarning
+            <ErrorState
               error={lists.error}
               message="Não foi possível carregar os detalhes da lista."
-              hasData={list !== undefined}
-              refreshing={lists.isFetching}
-              retry={() => void lists.refetch()}
+              retry={{
+                hasData: list !== undefined,
+                refreshing: lists.isFetching,
+                onPress: () => void lists.refetch(),
+              }}
             />
           )}
           {list && (
-            <View
-              className="gap-3 rounded-2xl border border-stone-300 p-4"
-              style={{ backgroundColor: list.color }}
-            >
-              <Text className="text-base font-semibold text-stone-900">
-                Cor da lista
-              </Text>
+            <Card className="gap-md p-lg">
+              <View className="flex-row items-center gap-sm">
+                <ListColor color={list.color} />
+                <Text className="text-body font-semibold text-ink">
+                  Cor da lista
+                </Text>
+              </View>
               <Palette
                 value={list.color}
                 disabled={changeColor.isPending}
@@ -129,22 +137,20 @@ export default function ListScreen() {
                 }
               />
               {changeColor.error && (
-                <ErrorMessage
+                <ErrorState
                   error={changeColor.error}
                   message="Não foi possível confirmar a mudança de cor."
                 />
               )}
-            </View>
+            </Card>
           )}
-          <View className="gap-3 rounded-2xl bg-white p-4">
-            <TextInput
+          <Card className="gap-md p-lg">
+            <Input
               accessibilityLabel="Nova tarefa"
-              className="min-h-11 rounded-xl border border-stone-300 px-3 text-base text-stone-900"
               editable={!disabled && !!tasks.data}
               maxLength={200}
               onChangeText={setTitle}
               placeholder="Nova tarefa"
-              placeholderTextColor="#78716C"
               value={title}
             />
             <Button
@@ -154,35 +160,37 @@ export default function ListScreen() {
                 checklist.mutate({ action: 'create', title: title.trim() })
               }
             />
-          </View>
+          </Card>
           {checklist.error && checklist.variables && (
-            <ErrorMessage
+            <ErrorState
               error={checklist.error}
               message={checklistErrors[checklist.variables.action]}
             />
           )}
           {tasks.isPending && (
-            <ActivityIndicator accessibilityLabel="Carregando tarefas" />
+            <ActivityIndicator
+              accessibilityLabel="Carregando tarefas"
+              color={colors.brand}
+            />
           )}
           {tasks.error && (
-            <QueryWarning
+            <ErrorState
               error={tasks.error}
               message="Não foi possível carregar as tarefas."
-              hasData={tasks.data !== undefined}
-              refreshing={tasks.isFetching}
-
-              retry={() => void tasks.refetch()}
+              retry={{
+                hasData: tasks.data !== undefined,
+                refreshing: tasks.isFetching,
+                onPress: () => void tasks.refetch(),
+              }}
             />
           )}
           {tasks.data?.length === 0 && (
-            <Text className="text-stone-700">
-              Esta lista ainda não tem tarefas.
-            </Text>
+            <EmptyState message="Esta lista ainda não tem tarefas." />
           )}
           {tasks.data && tasks.data.length > 0 && (
             <>
               {tasks.data.length > 1 && (
-                <Text className="text-stone-700">
+                <Text className="text-body text-muted">
                   Segure a alça ☰ e arraste para reordenar.
                 </Text>
               )}
@@ -199,49 +207,42 @@ export default function ListScreen() {
                     checklist.mutate(reorderChange(data));
                 }}
                 overDrag="vertical"
-                rowGap={8}
+                rowGap={tokens.spacing.sm}
                 scrollableRef={scrollRef}
                 sortEnabled={!checklist.isPending && tasks.data.length > 1}
                 renderItem={({ item }) => (
-                  <View className="flex-row items-center rounded-xl border border-stone-200 bg-white">
-                    <Pressable
-                      accessibilityLabel={item.title}
-                      accessibilityRole="checkbox"
-                      accessibilityState={{ checked: item.isChecked, disabled }}
-                      className="min-h-14 flex-1 flex-row items-center gap-3 p-3"
+                  <Card className="flex-row items-center">
+                    <Checkbox
+                      label={item.title}
+                      checked={item.isChecked}
                       disabled={disabled}
                       onPress={() =>
                         checklist.mutate({ action: 'toggle', id: item.id })
                       }
                     >
-                      <View className="h-6 w-6 items-center justify-center rounded border border-stone-500">
-                        {item.isChecked && (
-                          <Text className="font-bold text-stone-900">✓</Text>
-                        )}
-                      </View>
                       <View className="flex-1">
                         <Text
                           className={
                             item.isChecked
-                              ? 'text-base text-stone-600 line-through'
-                              : 'text-base text-stone-900'
+                              ? 'text-body text-muted line-through'
+                              : 'text-body text-ink'
                           }
                         >
                           {item.title}
                         </Text>
                         {item.notes && item.notes !== item.title && (
-                          <Text className="mt-1 text-stone-700">
+                          <Text className="mt-xs text-caption text-muted">
                             {item.notes}
                           </Text>
                         )}
                       </View>
-                    </Pressable>
+                    </Checkbox>
                     <Sortable.Handle>
-                      <View className="h-12 w-12 items-center justify-center">
-                        <Text className="text-xl text-stone-600">☰</Text>
+                      <View className="min-h-tap min-w-tap items-center justify-center">
+                        <Text className="text-heading text-muted">☰</Text>
                       </View>
                     </Sortable.Handle>
-                  </View>
+                  </Card>
                 )}
               />
             </>
