@@ -17,4 +17,4 @@ WORKDIR /app/apps/api
 RUN pnpm exec prisma generate
 
 USER node
-CMD ["sh", "-ec", "pnpm db:migrate && pnpm db:seed && exec node --import tsx src/server.ts"]
+CMD ["sh", "-ec", "pnpm db:migrate && exec node --import tsx src/server.ts"]

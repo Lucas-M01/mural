@@ -2,7 +2,7 @@ import type { TypeBoxTypeProvider } from '@fastify/type-provider-typebox';
 import { Type } from '@sinclair/typebox';
 import type { FastifyPluginAsync } from 'fastify';
 import type { List, PrismaClient, Task } from '../generated/prisma/client.js';
-import { developmentUser } from './development-user.js';
+import { ApiError } from './errors.js';
 import { listService } from './list-service.js';
 import {
   ErrorResponse,
@@ -17,12 +17,6 @@ import {
   TasksQuery,
 } from './schemas.js';
 import { taskService } from './task-service.js';
-
-declare module 'fastify' {
-  interface FastifyRequest {
-    developmentUserId: string;
-  }
-}
 
 function serializeList(list: List) {
   return {
@@ -43,7 +37,8 @@ function serializeTask(task: Task) {
   };
 }
 
-const invalid = { 400: ErrorResponse };
+const security = [{ bearerAuth: [] }];
+const invalid = { 400: ErrorResponse, 401: ErrorResponse };
 const missing = { ...invalid, 404: ErrorResponse };
 const conflict = { ...missing, 409: ErrorResponse };
 const noContent = Type.Null({ description: 'Operação concluída.' });
@@ -56,18 +51,47 @@ export const coreRoutes: FastifyPluginAsync<{ db: PrismaClient }> = async (
   const lists = listService(db);
   const tasks = taskService(db);
 
-  app.decorateRequest('developmentUserId', '');
-  app.addHook('onRequest', async (request) => {
-    request.developmentUserId = developmentUser.id;
-  });
+  app.addHook('onRequest', app.authenticate);
+
+  app.get(
+    '/me',
+    {
+      schema: {
+        tags: ['Autenticação'],
+        security,
+        response: {
+          200: Type.Object({
+            id: Type.String(),
+            name: Type.String(),
+            email: Type.String(),
+            avatarUrl: Type.Union([Type.String(), Type.Null()]),
+          }),
+          401: ErrorResponse,
+        },
+      },
+    },
+    async (request) => {
+      const user = await db.user.findUnique({
+        where: { id: request.user.sub },
+        select: { id: true, name: true, email: true, avatarUrl: true },
+      });
+      if (!user)
+        throw new ApiError(401, 'UNAUTHORIZED', 'Sessão inválida ou expirada.');
+      return user;
+    },
+  );
 
   app.get(
     '/lists',
     {
-      schema: { tags: ['Listas'], response: { 200: Type.Array(ListResponse) } },
+      schema: {
+        tags: ['Listas'],
+        security,
+        response: { 200: Type.Array(ListResponse), 401: ErrorResponse },
+      },
     },
     async (request) =>
-      (await lists.findAll(request.developmentUserId)).map(serializeList),
+      (await lists.findAll(request.user.sub)).map(serializeList),
   );
 
   app.post(
@@ -75,12 +99,13 @@ export const coreRoutes: FastifyPluginAsync<{ db: PrismaClient }> = async (
     {
       schema: {
         tags: ['Listas'],
+        security,
         body: ListCreate,
         response: { 201: ListResponse, ...invalid },
       },
     },
     async (request, reply) => {
-      const list = await lists.create(request.developmentUserId, request.body);
+      const list = await lists.create(request.user.sub, request.body);
       return reply.code(201).send(serializeList(list));
     },
   );
@@ -90,6 +115,7 @@ export const coreRoutes: FastifyPluginAsync<{ db: PrismaClient }> = async (
     {
       schema: {
         tags: ['Listas'],
+        security,
         params: IdParams,
         body: ListPatch,
         response: { 200: ListResponse, ...missing },
@@ -97,11 +123,7 @@ export const coreRoutes: FastifyPluginAsync<{ db: PrismaClient }> = async (
     },
     async (request) =>
       serializeList(
-        await lists.update(
-          request.developmentUserId,
-          request.params.id,
-          request.body,
-        ),
+        await lists.update(request.user.sub, request.params.id, request.body),
       ),
   );
 
@@ -110,12 +132,13 @@ export const coreRoutes: FastifyPluginAsync<{ db: PrismaClient }> = async (
     {
       schema: {
         tags: ['Listas'],
+        security,
         params: IdParams,
         response: { 204: noContent, ...missing, 403: ErrorResponse },
       },
     },
     async (request, reply) => {
-      await lists.remove(request.developmentUserId, request.params.id);
+      await lists.remove(request.user.sub, request.params.id);
       return reply.code(204).send(null);
     },
   );
@@ -125,6 +148,7 @@ export const coreRoutes: FastifyPluginAsync<{ db: PrismaClient }> = async (
     {
       schema: {
         tags: ['Tarefas'],
+        security,
         params: IdParams,
         querystring: TasksQuery,
         response: { 200: Type.Array(TaskResponse), ...missing },
@@ -133,7 +157,7 @@ export const coreRoutes: FastifyPluginAsync<{ db: PrismaClient }> = async (
     async (request) =>
       (
         await tasks.findAll(
-          request.developmentUserId,
+          request.user.sub,
           request.params.id,
           request.query.updatedSince,
         )
@@ -145,6 +169,7 @@ export const coreRoutes: FastifyPluginAsync<{ db: PrismaClient }> = async (
     {
       schema: {
         tags: ['Tarefas'],
+        security,
         params: IdParams,
         body: TaskCreate,
         response: { 201: TaskResponse, ...conflict },
@@ -152,7 +177,7 @@ export const coreRoutes: FastifyPluginAsync<{ db: PrismaClient }> = async (
     },
     async (request, reply) => {
       const task = await tasks.create(
-        request.developmentUserId,
+        request.user.sub,
         request.params.id,
         request.body,
       );
@@ -165,6 +190,7 @@ export const coreRoutes: FastifyPluginAsync<{ db: PrismaClient }> = async (
     {
       schema: {
         tags: ['Tarefas'],
+        security,
         params: IdParams,
         body: TaskPatch,
         response: { 200: TaskResponse, ...missing },
@@ -172,11 +198,7 @@ export const coreRoutes: FastifyPluginAsync<{ db: PrismaClient }> = async (
     },
     async (request) =>
       serializeTask(
-        await tasks.update(
-          request.developmentUserId,
-          request.params.id,
-          request.body,
-        ),
+        await tasks.update(request.user.sub, request.params.id, request.body),
       ),
   );
 
@@ -185,14 +207,13 @@ export const coreRoutes: FastifyPluginAsync<{ db: PrismaClient }> = async (
     {
       schema: {
         tags: ['Tarefas'],
+        security,
         params: IdParams,
         response: { 200: TaskResponse, ...conflict },
       },
     },
     async (request) =>
-      serializeTask(
-        await tasks.toggle(request.developmentUserId, request.params.id),
-      ),
+      serializeTask(await tasks.toggle(request.user.sub, request.params.id)),
   );
 
   app.patch(
@@ -200,12 +221,13 @@ export const coreRoutes: FastifyPluginAsync<{ db: PrismaClient }> = async (
     {
       schema: {
         tags: ['Tarefas'],
+        security,
         body: TaskReorder,
         response: { 204: noContent, ...conflict },
       },
     },
     async (request, reply) => {
-      await tasks.reorder(request.developmentUserId, request.body);
+      await tasks.reorder(request.user.sub, request.body);
       return reply.code(204).send(null);
     },
   );
@@ -215,12 +237,13 @@ export const coreRoutes: FastifyPluginAsync<{ db: PrismaClient }> = async (
     {
       schema: {
         tags: ['Tarefas'],
+        security,
         params: IdParams,
         response: { 204: noContent, ...missing },
       },
     },
     async (request, reply) => {
-      await tasks.remove(request.developmentUserId, request.params.id);
+      await tasks.remove(request.user.sub, request.params.id);
       return reply.code(204).send(null);
     },
   );
