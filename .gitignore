@@ -10,3 +10,5 @@ apps/mobile/ios/
 .agents/
 .aws/
 .codex/
+
+apps/api/generated/

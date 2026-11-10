@@ -5,6 +5,7 @@ export default tseslint.config(
   {
     ignores: [
       '**/.expo/**',
+      'apps/api/generated/**',
       '**/dist/**',
       '**/coverage/**',
       '**/android/**',

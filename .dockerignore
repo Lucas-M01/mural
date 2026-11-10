@@ -12,3 +12,6 @@
 !packages/shared/package.json
 !packages/shared/src/
 !packages/shared/src/*.ts
+!apps/api/prisma.config.ts
+!apps/api/prisma/
+!apps/api/prisma/**
