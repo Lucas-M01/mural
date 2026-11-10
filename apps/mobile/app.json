@@ -1,0 +1,10 @@
+{
+  "expo": {
+    "name": "Mural",
+    "slug": "mural",
+    "scheme": "mural",
+    "version": "0.0.0",
+    "platforms": ["android", "ios"],
+    "plugins": ["expo-router"]
+  }
+}

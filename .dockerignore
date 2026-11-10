@@ -1,0 +1,14 @@
+**
+!package.json
+!pnpm-workspace.yaml
+!pnpm-lock.yaml
+!apps/
+!apps/api/
+!apps/api/package.json
+!apps/api/src/
+!apps/api/src/*.ts
+!packages/
+!packages/shared/
+!packages/shared/package.json
+!packages/shared/src/
+!packages/shared/src/*.ts
