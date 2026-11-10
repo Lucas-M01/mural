@@ -53,6 +53,22 @@ As rotas de listas e tarefas ficam em `/api/v1` e usam o usuário fixo do seed. 
 
 Na tela inicial, dê um nome à lista, escolha uma cor e toque em **Criar lista**. Abra a lista, adicione duas tarefas, toque no checkbox para marcar ou desmarcar e segure a alça **☰** para arrastar. Volte à home, escreva uma **Nota rápida**, escolha a lista de destino e salve. Abra a lista novamente para conferir a nota e a ordem das tarefas.
 
+## Design do app mobile
+
+O tema segue a aparência do sistema. A fonte dos tokens é `apps/mobile/src/tokens.json`. O Tailwind expõe esses valores como classes NativeWind e a navegação usa as mesmas cores no cabeçalho e na barra de status.
+
+| Grupo            | Tokens                                                                                                                                                 |
+| ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Cores            | `canvas`, `surface`, `subtle`, `ink`, `muted`, `outline`, `brand`, `on-brand`, `pressed`, `danger` e `danger-surface`, com valores para claro e escuro |
+| Paleta de listas | Branco, amarelo, rosa, verde, azul e lilás. Os valores HEX persistidos aparecem como marcadores e amostras de cor                                      |
+| Espaçamento      | `xs` 4, `sm` 8, `md` 12, `lg` 16 e `xl` 20. As dimensões de controles incluem `tap` 44, `row` 56, `note` 80 e `indicator` 24                           |
+| Tipografia       | Tamanho e altura de linha em `caption` 14/20, `body` 16/24, `heading` 20/28 e `display` 36/44                                                          |
+| Raios            | `indicator` 6, `control` 12, `card` 16 e `pill` 999                                                                                                    |
+
+Use classes semânticas como `bg-surface text-ink`, `gap-md` e `rounded-card`. Os tamanhos são unidades lógicas do React Native. Os controles interativos das telas reservam pelo menos 44 × 44. Os componentes compartilhados `Button`, `Input`, `Card`, `Checkbox`, `EmptyState` e `ErrorState` ficam em `apps/mobile/src/ui.tsx`.
+
+Para conferir no Expo Go, alterne a aparência nas configurações do celular e observe a home e a tela da lista, incluindo o cabeçalho, os campos e a paleta.
+
 ## Checagens
 
 Os testes de integração usam PostgreSQL em um contêiner separado, com armazenamento temporário. Gere o Prisma Client antes das checagens e aplique a migration ao banco de teste.

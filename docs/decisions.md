@@ -22,3 +22,4 @@
 - O app usa o endereço base de `EXPO_PUBLIC_API_URL` e acrescenta `/api/v1`. Para testar pela rede local, o celular acessa a API de desenvolvimento executada no computador.
 - A reordenação preserva as posições existentes quando são distintas e envia apenas as posições que mudaram. Se um arraste exceder o limite de 100 alterações da API, o app restaura a ordem e pede um movimento menor.
 - As requisições do app expiram após 8 segundos. Leituras repetem uma vez em falhas transitórias e mantêm o cache em memória visível. Escritas falham sem repetição automática, pois a API pode ter recebido a alteração antes de a conexão cair.
+- O tema acompanha a aparência do sistema. As cores das listas são exibidas como marcadores em superfícies neutras, com os mesmos valores gravados pela API. Assim, o texto mantém contraste mesmo quando a lista tem uma cor personalizada.
