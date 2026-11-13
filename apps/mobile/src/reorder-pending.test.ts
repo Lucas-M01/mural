@@ -3,7 +3,14 @@ import type { Task } from './api';
 import { reorderPending } from './reorder-pending';
 
 function task(id: string, position: number, isChecked = false): Task {
-  return { id, position, isChecked, title: id, notes: null };
+  return {
+    id,
+    position,
+    isChecked,
+    title: id,
+    notes: null,
+    priority: 'MEDIUM',
+  };
 }
 
 describe('reorderPending', () => {

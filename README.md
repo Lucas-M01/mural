@@ -53,19 +53,14 @@ Entre com a primeira conta Google e crie uma lista chamada **Conta A** com uma t
 
 ## Design do app mobile
 
-O tema segue a aparência do sistema, com fundo azul-escuro e destaques violeta no modo escuro, e superfícies claras com a mesma família de cores no modo claro. A fonte dos tokens é `apps/mobile/src/tokens.json`. O Tailwind expõe esses valores como classes NativeWind e a navegação usa as mesmas cores no cabeçalho e na barra de status.
+O visual usa como referência as telas em `stitch-export`. No modo escuro, os tokens de superfície e os acentos índigo vêm do sistema visual exportado. O app também acompanha o modo claro do sistema.
 
-| Grupo            | Tokens                                                                                                                                                                                            |
-| ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Cores            | `canvas`, `surface`, `subtle`, `ink`, `muted`, `outline`, `brand`, `on-brand`, `pressed`, `brand-surface`, `brand-ink`, `completed`, `danger` e `danger-surface`, com valores para claro e escuro |
-| Paleta de listas | Branco, amarelo, rosa, verde, azul e lilás. Os valores HEX persistidos aparecem como marcadores e amostras de cor                                                                                 |
-| Espaçamento      | `xs` 4, `sm` 8, `md` 12, `lg` 16 e `xl` 20. As dimensões de controles incluem `tap` 44, `row` 56, `note` 80 e `indicator` 24                                                                      |
-| Tipografia       | Tamanho e altura de linha em `caption` 14/20, `body` 16/24, `heading` 20/28 e `display` 36/44                                                                                                     |
-| Raios            | `indicator` 6, `control` 12, `card` 16 e `pill` 999                                                                                                                                               |
+- **Painel** mostra o progresso geral das tarefas, atalhos para as listas e até cinco tarefas pendentes ordenadas por prioridade.
+- **Listas** reúne cartões com o progresso de cada lista, criação de lista e nota rápida. Abra um cartão para editar a cor, marcar e reordenar tarefas.
+- **Nova tarefa** permite escolher a lista, a descrição e a prioridade.
+- **Perfil** mostra a conta Google ativa e permite sair.
 
-Use classes semânticas como `bg-surface text-ink`, `gap-md` e `rounded-card`. Os tamanhos são unidades lógicas do React Native. Os controles interativos das telas reservam pelo menos 44 × 44. Os componentes compartilhados `Button`, `Input`, `Card`, `Checkbox`, `EmptyState` e `ErrorState` ficam em `apps/mobile/src/ui.tsx`.
-
-Para conferir no development build, alterne a aparência nas configurações do celular e observe a home e a tela da lista, incluindo o cabeçalho, os campos e a paleta.
+Os tokens ficam em `apps/mobile/src/tokens.json` e são expostos como classes NativeWind. O desenvolvimento visual pode ser conferido no Android pelo development build.
 
 ## Checagens
 

@@ -31,3 +31,8 @@
 - A API identifica a conta pelo `sub` verificado do Google e emite um JWT HS256 com validade de sete dias. O app volta ao login ao receber 401 e cria um cache de consultas para cada sessão.
 - O refresh token usa AES-256-GCM com IV aleatório de 12 bytes e formato `v1.iv.tag.ciphertext`, com os três campos binários em base64. Se o Google omitir o refresh token em um login posterior, a API preserva o valor já salvo.
 - A rota de login aceita até dez tentativas por minuto por IP da conexão. O escopo Calendar é solicitado durante o login para obter a autorização offline.
+
+## Atualização visual baseada no Stitch
+
+- O painel calcula o progresso geral pelas tarefas existentes. As listas exibem a proporção de tarefas concluídas e o perfil usa os dados de `/me`.
+- A navegação inclui Painel, Listas e Perfil. O formulário de tarefa usa a prioridade que a API já aceita. Calendário, notificações e etiquetas seguem o plano de fases.

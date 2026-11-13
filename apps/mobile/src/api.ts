@@ -8,12 +8,20 @@ export type List = {
   color: string;
 };
 
+export type Priority = 'HIGH' | 'MEDIUM' | 'LOW';
+export const priorityLabels: Record<Priority, string> = {
+  HIGH: 'Alta',
+  MEDIUM: 'Média',
+  LOW: 'Baixa',
+};
+
 export type Task = {
   id: string;
   title: string;
   notes: string | null;
   isChecked: boolean;
   position: number;
+  priority: Priority;
 };
 
 type TaskPosition = Pick<Task, 'id' | 'position'>;
@@ -56,6 +64,9 @@ function isTask(value: unknown): value is Task {
     typeof value.title === 'string' &&
     (value.notes === null || typeof value.notes === 'string') &&
     typeof value.isChecked === 'boolean' &&
+    (value.priority === 'HIGH' ||
+      value.priority === 'MEDIUM' ||
+      value.priority === 'LOW') &&
     typeof value.position === 'number' &&
     Number.isInteger(value.position)
   );
@@ -158,9 +169,24 @@ export const api = {
     request(`/lists/${id}`, 'PATCH', { color }).then(readList),
   createTask: (
     listId: string,
-    input: Pick<Task, 'title'> & { notes?: string },
+    input: Pick<Task, 'title'> & { notes?: string; priority?: Priority },
   ) => request(`/lists/${listId}/tasks`, 'POST', input),
   toggleTask: (id: string) => request(`/tasks/${id}/toggle`, 'PATCH'),
   reorderTasks: (positions: TaskPosition[]) =>
     request('/tasks/reorder', 'PATCH', positions),
 };
+
+export const profileQuery = queryOptions({
+  queryKey: ['profile'],
+  queryFn: async ({ signal }) => {
+    const data = await request('/me', 'GET', undefined, signal);
+    if (
+      isRecord(data) &&
+      typeof data.name === 'string' &&
+      typeof data.email === 'string' &&
+      (data.avatarUrl === null || typeof data.avatarUrl === 'string')
+    )
+      return { name: data.name, email: data.email, avatarUrl: data.avatarUrl };
+    throw new Error('A API retornou um perfil inválido.');
+  },
+});

@@ -70,7 +70,13 @@ export default function RootLayout() {
         >
           <Stack.Protected guard={token !== null}>
             <Stack.Screen name="index" options={{ headerShown: false }} />
+            <Stack.Screen name="lists/index" options={{ headerShown: false }} />
             <Stack.Screen name="lists/[id]" />
+            <Stack.Screen
+              name="new-task"
+              options={{ title: 'Nova tarefa', presentation: 'modal' }}
+            />
+            <Stack.Screen name="profile" options={{ headerShown: false }} />
           </Stack.Protected>
           <Stack.Protected guard={token === null}>
             <Stack.Screen name="login" options={{ headerShown: false }} />
