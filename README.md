@@ -78,3 +78,7 @@ pnpm test
 ```
 
 Para encerrar o banco de teste, rode `docker compose stop postgres-test`.
+
+## Licença
+
+Este projeto está licenciado sob a [licença MIT](LICENSE).
