@@ -2,6 +2,8 @@
 
 App mobile de notas e tarefas para duas pessoas. No app você pode criar listas coloridas, salvar notas rápidas e organizar tarefas em checklists.
 
+> **Projeto em desenvolvimento:** o Mural ainda não foi finalizado. Algumas funcionalidades e melhorias estão pendentes e serão concluídas em etapas futuras.
+
 ## Requisitos
 
 - Node.js 24 LTS e pnpm 11.1.3
