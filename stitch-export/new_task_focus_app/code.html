@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #0F172A;
+            color: #e4e1ed;
+            -webkit-font-smoothing: antialiased;
+        }
+        .glass-panel {
+            background: rgba(30, 41, 59, 0.7);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+    </style>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "on-background": "#e4e1ed",
+                      "primary-fixed": "#e1e0ff",
+                      "on-secondary-fixed": "#23005c",
+                      "on-primary": "#1000a9",
+                      "surface": "#13131b",
+                      "on-tertiary-fixed": "#301400",
+                      "on-surface": "#e4e1ed",
+                      "outline-variant": "#464554",
+                      "inverse-on-surface": "#303038",
+                      "secondary-fixed-dim": "#d0bcff",
+                      "tertiary-container": "#d97721",
+                      "surface-container-highest": "#34343d",
+                      "on-error-container": "#ffdad6",
+                      "on-surface-variant": "#c7c4d7",
+                      "tertiary-fixed-dim": "#ffb783",
+                      "on-tertiary-fixed-variant": "#703700",
+                      "surface-tint": "#c0c1ff",
+                      "secondary": "#d0bcff",
+                      "primary-fixed-dim": "#c0c1ff",
+                      "error-container": "#93000a",
+                      "on-tertiary": "#4f2500",
+                      "background": "#13131b",
+                      "on-primary-fixed": "#07006c",
+                      "surface-container-low": "#1b1b23",
+                      "secondary-fixed": "#e9ddff",
+                      "on-secondary": "#3c0091",
+                      "surface-dim": "#13131b",
+                      "primary": "#c0c1ff",
+                      "secondary-container": "#571bc1",
+                      "primary-container": "#8083ff",
+                      "outline": "#908fa0",
+                      "on-secondary-fixed-variant": "#5516be",
+                      "on-primary-fixed-variant": "#2f2ebe",
+                      "error": "#ffb4ab",
+                      "tertiary-fixed": "#ffdcc5",
+                      "surface-container": "#1f1f27",
+                      "surface-container-lowest": "#0d0d15",
+                      "inverse-surface": "#e4e1ed",
+                      "inverse-primary": "#494bd6",
+                      "on-error": "#690005",
+                      "tertiary": "#ffb783",
+                      "on-tertiary-container": "#452000",
+                      "surface-bright": "#393841",
+                      "on-secondary-container": "#c4abff",
+                      "surface-container-high": "#292932",
+                      "surface-variant": "#34343d",
+                      "on-primary-container": "#0d0096"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.25rem",
+                      "lg": "0.5rem",
+                      "xl": "0.75rem",
+                      "full": "9999px"
+              },
+              "spacing": {
+                      "stack-gap": "0.75rem",
+                      "inline-gap": "0.5rem",
+                      "section-padding": "1.5rem",
+                      "container-margin": "1.25rem"
+              },
+              "fontFamily": {
+                      "h1": ["Inter"],
+                      "body-lg": ["Inter"],
+                      "caps-xs": ["Inter"],
+                      "body-md": ["Inter"],
+                      "h2": ["Inter"],
+                      "label-sm": ["Inter"]
+              },
+              "fontSize": {
+                      "h1": ["24px", {"lineHeight": "32px", "letterSpacing": "-0.02em", "fontWeight": "600"}],
+                      "body-lg": ["16px", {"lineHeight": "24px", "letterSpacing": "0", "fontWeight": "400"}],
+                      "caps-xs": ["11px", {"lineHeight": "12px", "letterSpacing": "0.05em", "fontWeight": "700"}],
+                      "body-md": ["14px", {"lineHeight": "20px", "letterSpacing": "0", "fontWeight": "400"}],
+                      "h2": ["20px", {"lineHeight": "28px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                      "label-sm": ["12px", {"lineHeight": "16px", "letterSpacing": "0.02em", "fontWeight": "500"}]
+              }
+            },
+          },
+        }
+    </script>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-background min-h-screen flex flex-col">
+<!-- Top AppBar (Modal Header Style) -->
+<header class="fixed top-0 w-full z-50 bg-background/80 backdrop-blur-xl flex justify-between items-center px-container-margin h-16 w-full">
+<button class="flex items-center justify-center w-10 h-10 transition-all duration-200 active:scale-95 text-on-surface-variant hover:opacity-80">
+<span class="material-symbols-outlined" data-icon="close">close</span>
+</button>
+<h1 class="font-h1 text-h1 tracking-tight text-on-surface">New Task</h1>
+<button class="bg-primary-container text-on-primary-container px-5 py-2 rounded-xl font-label-sm text-label-sm font-bold transition-all duration-200 active:scale-95 shadow-lg shadow-primary-container/20">
+            Create
+        </button>
+</header>
+<!-- Main Content Canvas -->
+<main class="mt-16 flex-1 px-container-margin py-section-padding space-y-8 max-w-2xl mx-auto w-full pb-32">
+<!-- Task Identity Section -->
+<section class="space-y-4">
+<div class="relative group">
+<input class="w-full bg-transparent border-none focus:ring-0 text-2xl md:text-3xl font-h1 placeholder:text-on-surface-variant/30 text-on-surface py-2 px-0 transition-all" placeholder="What needs to be done?" type="text"/>
+<div class="absolute bottom-0 left-0 w-0 h-[2px] bg-primary transition-all duration-500 group-focus-within:w-full"></div>
+</div>
+<textarea class="w-full bg-surface-container-low/50 rounded-xl border-none focus:ring-1 focus:ring-primary/20 text-body-md font-body-md text-on-surface-variant placeholder:text-on-surface-variant/40 p-4 resize-none" placeholder="Add a detailed description..." rows="3"></textarea>
+</section>
+<!-- Bento Grid Configuration -->
+<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+<!-- Priority Selector -->
+<div class="bg-surface-container rounded-xl p-4 flex flex-col gap-3 border border-outline-variant/10">
+<span class="font-caps-xs text-caps-xs text-on-surface-variant uppercase tracking-widest">Priority</span>
+<div class="flex gap-2">
+<button class="flex-1 py-3 rounded-lg bg-error-container/10 border border-error-container/30 text-error flex flex-col items-center gap-1 transition-all active:scale-95">
+<span class="material-symbols-outlined text-[20px]" data-icon="priority_high">priority_high</span>
+<span class="text-[10px] font-bold uppercase">High</span>
+</button>
+<button class="flex-1 py-3 rounded-lg bg-tertiary-container/10 border border-tertiary-container/30 text-tertiary flex flex-col items-center gap-1 transition-all active:scale-95">
+<span class="material-symbols-outlined text-[20px]" data-icon="horizontal_rule">horizontal_rule</span>
+<span class="text-[10px] font-bold uppercase">Med</span>
+</button>
+<button class="flex-1 py-3 rounded-lg bg-primary-container/10 border border-primary-container/30 text-primary flex flex-col items-center gap-1 transition-all active:scale-95 ring-1 ring-primary/50">
+<span class="material-symbols-outlined text-[20px]" data-icon="low_priority">low_priority</span>
+<span class="text-[10px] font-bold uppercase">Low</span>
+</button>
+</div>
+</div>
+<!-- Date & Time Picker -->
+<div class="bg-surface-container rounded-xl p-4 flex flex-col gap-3 border border-outline-variant/10">
+<span class="font-caps-xs text-caps-xs text-on-surface-variant uppercase tracking-widest">Schedule</span>
+<div class="flex items-center gap-3 bg-surface-container-high rounded-lg p-3 cursor-pointer hover:bg-surface-container-highest transition-colors">
+<span class="material-symbols-outlined text-primary" data-icon="calendar_today">calendar_today</span>
+<div class="flex flex-col">
+<span class="text-label-sm font-label-sm text-on-surface">Today, Oct 24</span>
+<span class="text-[10px] text-on-surface-variant">Due at 5:00 PM</span>
+</div>
+</div>
+</div>
+<!-- Category Selector -->
+<div class="bg-surface-container rounded-xl p-4 flex flex-col gap-3 border border-outline-variant/10 md:col-span-2">
+<span class="font-caps-xs text-caps-xs text-on-surface-variant uppercase tracking-widest">Category</span>
+<div class="flex gap-stack-gap overflow-x-auto pb-2 scrollbar-hide">
+<button class="flex items-center gap-2 px-4 py-2 rounded-full bg-surface-container-high border border-outline-variant/20 hover:border-primary/50 transition-all whitespace-nowrap">
+<span class="material-symbols-outlined text-[18px] text-secondary" data-icon="work">work</span>
+<span class="text-label-sm font-label-sm">Work</span>
+</button>
+<button class="flex items-center gap-2 px-4 py-2 rounded-full bg-surface-container-high border border-outline-variant/20 hover:border-primary/50 transition-all whitespace-nowrap">
+<span class="material-symbols-outlined text-[18px] text-tertiary" data-icon="person">person</span>
+<span class="text-label-sm font-label-sm">Personal</span>
+</button>
+<button class="flex items-center gap-2 px-4 py-2 rounded-full bg-surface-container-high border border-outline-variant/20 hover:border-primary/50 transition-all whitespace-nowrap">
+<span class="material-symbols-outlined text-[18px] text-primary" data-icon="school">school</span>
+<span class="text-label-sm font-label-sm">Studies</span>
+</button>
+<button class="flex items-center gap-2 px-4 py-2 rounded-full bg-surface-container-high border border-outline-variant/20 hover:border-primary/50 transition-all whitespace-nowrap">
+<span class="material-symbols-outlined text-[18px] text-error" data-icon="favorite">favorite</span>
+<span class="text-label-sm font-label-sm">Health</span>
+</button>
+</div>
+</div>
+<!-- Tags Section -->
+<div class="bg-surface-container rounded-xl p-4 flex flex-col gap-3 border border-outline-variant/10 md:col-span-2">
+<span class="font-caps-xs text-caps-xs text-on-surface-variant uppercase tracking-widest">Tags</span>
+<div class="flex flex-wrap gap-2">
+<div class="flex items-center gap-1.5 px-3 py-1 rounded-md bg-outline-variant/10 text-on-surface-variant text-label-sm border border-outline-variant/20">
+                        #productivity <span class="material-symbols-outlined text-[14px] cursor-pointer" data-icon="close">close</span>
+</div>
+<div class="flex items-center gap-1.5 px-3 py-1 rounded-md bg-outline-variant/10 text-on-surface-variant text-label-sm border border-outline-variant/20">
+                        #deepwork <span class="material-symbols-outlined text-[14px] cursor-pointer" data-icon="close">close</span>
+</div>
+<button class="flex items-center gap-1 px-3 py-1 rounded-md border border-dashed border-outline text-outline text-label-sm hover:text-primary hover:border-primary transition-all">
+<span class="material-symbols-outlined text-[14px]" data-icon="add">add</span> Add tag
+                    </button>
+</div>
+</div>
+</div>
+<!-- Visual Context Card (Glassmorphism) -->
+<div class="glass-panel rounded-xl overflow-hidden relative h-40 flex items-center justify-center">
+<img class="absolute inset-0 w-full h-full object-cover opacity-20 grayscale" data-alt="A sophisticated dark workspace with a minimalist desk arrangement featuring a high-end laptop, a focused spotlight illuminating a clean notebook, and a single green plant. The aesthetic is deep indigo and charcoal, conveying a high-performance deep work atmosphere. Soft ambient shadows and precision lighting create a serene professional mood." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDH8xGHWrL065cUuwOt2rQv44UzWMaUmFJByc7zSd-JZobQwkF0gg12E2rjd0J--aLB1XSCvy1UnFDBCK7Umm1y1Q-0L4yLhl7ewS4Vgk9SXAKui2cu7qj159K0YaoxmDiQLshGzT73SRqAuTLBjEK61DKvvcdGK52_wMqo98QqYME7MtacbKH3OGTEXPDE4B_Iw8w8mnOjc7XPiXaFrWmI0dQNuAFSjf2Zy9S0j0mNYMEMNzkArQbKllYXGdj5IMDePTDNw0T8B8A"/>
+<div class="relative z-10 text-center px-6">
+<p class="text-label-sm font-label-sm text-primary opacity-80 uppercase tracking-widest mb-1">Deep Focus Mode</p>
+<p class="text-body-md text-on-surface-variant italic">"Precision is the soul of efficiency."</p>
+</div>
+</div>
+</main>
+<!-- Bottom Navigation Bar (Suppressed because this is a focused task screen, but showing a 'Save Draft' floating option or similar minimal utility if needed) -->
+<!-- The BottomNavBar is suppressed based on the "Destination Rule" since this is a sub-page/transactional modal flow -->
+<div class="fixed bottom-0 left-0 w-full h-24 bg-gradient-to-t from-background to-transparent pointer-events-none"></div>
+</body></html>
